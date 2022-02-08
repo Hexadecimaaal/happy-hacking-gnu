@@ -66,7 +66,7 @@ int main(int argc, const char **argv)
 	argc = argparse_parse(&argparse, argc, argv);
 
 	// We can't do firmware stuff yet
-	if (action & ACTION_DUMP_FW || (strlen(fw_file) && action != 0)) {
+	if (action & ACTION_DUMP_FW || (strlen(fw_file) && action == 0)) {
 		printf("error: this command isn't implemented yet\n");
 		return 0;
 	}
