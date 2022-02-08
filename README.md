@@ -65,7 +65,10 @@ Firmware options
     --dump-firmware           save current firmware to file
 ```
 ## Remapping guide
+
 **Note:** It is possible to use scancodes that are not in the official software, but there are a few limitations. Most notably, media keys will act up if assigned to keys on the third row, since the HHKB uses a separate USB interface to send these.
+
+**Note 2:** Japanese layout HHKBs are not yet supported.
 
 To see available keys and their numbers, run `hhg --keymap`:
 ```
