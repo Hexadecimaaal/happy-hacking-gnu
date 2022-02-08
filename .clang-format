@@ -1,0 +1,5 @@
+BasedOnStyle: WebKit
+BreakBeforeBraces: Linux
+PointerAlignment: Right
+TabWidth: '4'
+UseTab: Always

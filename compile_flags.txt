@@ -1,0 +1,2 @@
+-Ideps/hidapi/hidapi
+-Ideps/argparse

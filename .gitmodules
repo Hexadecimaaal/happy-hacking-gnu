@@ -1,0 +1,6 @@
+[submodule "deps/argparse"]
+	path = deps/argparse
+	url = https://github.com/cofyc/argparse
+[submodule "hidapi"]
+	path = deps/hidapi
+	url = https://github.com/libusb/hidapi

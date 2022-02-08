@@ -1,0 +1,144 @@
+#include "functions.h"
+#include <argparse.h>
+#include <unistd.h>
+
+// Debug logging flag
+int verbose_log = 0;
+
+// Usage prompt for argparse
+static const char *const usage[] = {
+	"hhg [options] [[--] args]",
+	NULL,
+	NULL,
+};
+
+// Bits for arguments
+enum {
+	ACTION_INFO = (1 << 0),
+	ACTION_DIP = (1 << 1),
+	ACTION_MODE = (1 << 2),
+	ACTION_KEYMAP = (1 << 3),
+	ACTION_FACTORY_RESET = (1 << 4),
+	ACTION_REMAP = (1 << 5),
+	ACTION_DUMP_FW = (1 << 6)
+};
+
+int main(int argc, const char **argv)
+{
+	// Argument variables
+	int action;
+	int fn;
+	int key;
+	int code;
+	char fw_file[255];
+
+	// Clear argument variables
+	action = fn = key = code = fw_file[0] = 0;
+
+	// Argument parser options
+	struct argparse_option options[] = {
+		OPT_HELP(),
+		OPT_BOOLEAN('v', "verbose", &verbose_log, "show debug messages"),
+		OPT_GROUP("Basic options"),
+		OPT_BIT('i', "info", &action, "print keyboard information", NULL, ACTION_INFO),
+		OPT_BIT('d', "dip", &action, "print dipswitch state", NULL, ACTION_DIP),
+		OPT_BIT('m', "mode", &action, "print keyboard mode", NULL, ACTION_MODE),
+		OPT_BIT('k', "keymap", &action, "print current keymap", NULL, ACTION_KEYMAP),
+		OPT_BIT('f', "factory-reset", &action, "reset to factory defaults", NULL, ACTION_FACTORY_RESET),
+		OPT_GROUP("Keymapping options"),
+		// OPT_BIT(0, "remap", &action, "start key mapping", NULL, ACTION_REMAP, 0),
+		OPT_INTEGER(0, "remap-key", &key, "key number to remap", NULL, OPT_NONEG),
+		OPT_INTEGER(0, "scancode", &code, "hid scancode to map", NULL, OPT_NONEG),
+		OPT_BOOLEAN(0, "fn", &fn, "operate on function layer"),
+		OPT_GROUP("Firmware options (not implemented)"),
+		OPT_STRING(0, "flash-firmware", &fw_file, "flash firmware from file"),
+		OPT_BIT(0, "dump-firmware", &action, "save current firmware to file", NULL, ACTION_DUMP_FW, 0),
+
+		OPT_END(),
+	};
+
+	// Init argument parser
+	struct argparse argparse;
+	argparse_init(&argparse, options, usage, 0);
+	argparse_describe(&argparse, 0, "");
+
+	// Parse arguments
+	argc = argparse_parse(&argparse, argc, argv);
+
+	// We can't do firmware stuff yet
+	if (action & ACTION_DUMP_FW || (strlen(fw_file) && action != 0)) {
+		printf("error: this command isn't implemented yet\n");
+		return 0;
+	}
+
+	// Set remap flag if proper args are set
+	if (key != 0 && key <= 60 && code != 0 && code <= 0xff) {
+		action |= ACTION_REMAP;
+	}
+
+	// Show help message and quit if no args are set
+	if (action == 0) {
+		argparse_usage(&argparse);
+		return 0;
+	}
+
+	// Connect to device
+	hid_device *handle = hhkb_init();
+
+	// Debug log
+	if (verbose_log)
+		hhkb_print_product_info(handle);
+
+	// Print info
+	if (action & ACTION_INFO) {
+		hhkb_print_info(handle);
+	}
+	// Print dipswitch state
+	else if (action & ACTION_DIP) {
+		hhkb_print_dip_switch_state(handle);
+	}
+	// Print keyboard mode
+	else if (action & ACTION_MODE) {
+		hhkb_print_keyboard_mode(handle);
+	}
+	// Print layout
+	else if (action & ACTION_KEYMAP) {
+		hhkb_dump_layout(handle, fn);
+	}
+	// Factory reset device
+	else if (action & ACTION_FACTORY_RESET) {
+		// Confirm operation
+		printf("Are you sure you want to restore factory defaults?\nPlease type 'reset' to continue: ");
+		char str[10];
+		fgets(str, 10, stdin);
+
+		// Check input text
+		if (!strcmp(str, "reset\n")) {
+			sleep(1);
+			hhkb_reset_to_factory_default(handle);
+		} else {
+			printf("Aborting..\n");
+		}
+	}
+	// Remap key
+	else if (action & ACTION_REMAP) {
+		// Confirm operation
+		printf("Are you sure you want to assign 0x%02X to %i?\nPlease type 'confirm' to continue: ", code, key);
+		char str[10];
+		fgets(str, 10, stdin);
+
+		// Check input text
+		if (!strcmp(str, "confirm\n")) {
+			sleep(1);
+			hhkb_remap(handle, key, code);
+		} else {
+			printf("Aborting..\n");
+		}
+	}
+
+	// Close handle and shutdown
+	hid_close(handle);
+	hid_exit();
+
+	return 0;
+}
