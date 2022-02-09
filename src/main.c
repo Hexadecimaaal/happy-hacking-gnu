@@ -107,12 +107,12 @@ int main(int argc, const char **argv)
 	// Factory reset device
 	else if (action & ACTION_FACTORY_RESET) {
 		// Confirm operation
-		//printf("Are you sure you want to restore factory defaults?\nPlease type 'reset' to continue: ");
+		printf("Are you sure you want to restore factory defaults?\nPlease type 'reset' to continue: ");
 		char str[10];
-		//fgets(str, 10, stdin);
+		fgets(str, 10, stdin);
 
 		// Check input text
-		if (1 || !strcmp(str, "reset\n")) {
+		if (!strcmp(str, "reset\n")) {
 			sleep(1);
 			hhkb_reset_to_factory_default(handle);
 		} else {
