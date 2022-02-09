@@ -144,7 +144,7 @@ static void hhkb_print_info(hid_device *handle)
 	buffer = hhkb_read(handle);
 
 	if (verbose_log) {
-		// Print layout
+		// Debug log
 		printf("debug: GET_KEYBOARD_INFO ");
 		for (int i = 0; i < 6; i++) {
 			printf("0x%02X ", buffer[i]);
@@ -188,6 +188,34 @@ static void hhkb_print_info(hid_device *handle)
 
 	// Free read buffer
 	free(buffer);
+}
+
+static int hhkb_is_japanese_layout(hid_device *handle)
+{
+	unsigned char *buffer;
+	char model[64];
+
+	// Write to HID device and save response to buffer
+	hhkb_write(handle, GET_KEYBOARD_INFO);
+	buffer = hhkb_read(handle);
+
+	if (verbose_log) {
+		// Debug log
+		printf("debug: GET_KEYBOARD_INFO ");
+		for (int i = 0; i < 6; i++) {
+			printf("0x%02X ", buffer[i]);
+		}
+		printf("\n");
+	}
+
+	// Get model string from buffer
+	memcpy(model, buffer + 6, 20);
+
+	// Free read buffer
+	free(buffer);
+
+	// All japanese models are PD-KBx20xx
+	return !!strstr(model, "20");
 }
 
 static unsigned char *hhkb_get_layout(hid_device *handle, unsigned char with_fn)

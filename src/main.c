@@ -67,7 +67,7 @@ int main(int argc, const char **argv)
 	// We can't do firmware stuff yet
 	if (action & ACTION_DUMP_FW || (strlen(fw_file) && action == 0)) {
 		printf("error: this command isn't implemented yet\n");
-		return 0;
+		return EXIT_FAILURE;
 	}
 
 	// Set remap flag if proper args are set
@@ -78,7 +78,7 @@ int main(int argc, const char **argv)
 	// Show help message and quit if no args are set
 	if (action == 0) {
 		argparse_usage(&argparse);
-		return 0;
+		return EXIT_FAILURE;
 	}
 
 	// Connect to device
@@ -102,6 +102,12 @@ int main(int argc, const char **argv)
 	}
 	// Print layout
 	else if (action & ACTION_KEYMAP) {
+		// Abort if using Japanese HHKB
+		if (hhkb_is_japanese_layout(handle)) {
+			printf("error: this model isn't supported yet\n");
+			hhkb_quit(handle);
+		}
+
 		hhkb_print_layout_ansi(handle, fn);
 	}
 	// Factory reset device
@@ -121,6 +127,12 @@ int main(int argc, const char **argv)
 	}
 	// Remap key
 	else if (action & ACTION_REMAP) {
+		// Abort if using Japanese HHKB
+		if (hhkb_is_japanese_layout(handle)) {
+			printf("error: this model isn't supported yet\n");
+			hhkb_quit(handle);
+		}
+
 		// Confirm operation
 		printf("Are you sure you want to assign 0x%02X to %i?\nPlease type 'confirm' to continue: ", code, key);
 		char str[10];
@@ -139,5 +151,5 @@ int main(int argc, const char **argv)
 	hid_close(handle);
 	hid_exit();
 
-	return 0;
+	return EXIT_SUCCESS;
 }
