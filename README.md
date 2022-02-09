@@ -66,7 +66,7 @@ Firmware options
 ```
 ## Remapping guide
 
-**Note:** It is possible to use scancodes that are not in the official software, but there are a few limitations. Most notably, media keys will act up if assigned to keys on the third row, since the HHKB uses a separate USB interface to send these.
+**Note:** It is possible to use scancodes that are not in the official software, but there are a few limitations. Most notably, unsupported media keys will act up if assigned to most keys, since the HHKB usually uses a separate USB interface to send these.
 
 **Note 2:** Japanese layout HHKBs are not yet supported.
 
@@ -93,9 +93,9 @@ The first number on each key is what you should pass to `--remap-key`.
 
 You can find all [USB HID scan codes here](https://gist.github.com/MightyPork/6da26e382a7ad91b5496ee55fdc73db2), which should be passed to `--scancode`.
 
-For example, to assign a Media Play/Pause key to the Z key on your function layer, you would run:
+For example, to assign Print Screen to the Z key on your function layer, you would run:
 ```
-hhg --remap-key 17 --scancode 0xe8 --fn
+hhg --remap-key 17 --scancode 0x46 --fn
 ```
 
 ## License
