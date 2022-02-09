@@ -359,21 +359,10 @@ static void hhkb_reset_dipsw(hid_device *handle)
 	free(buffer);
 }
 
-static void hhkb_remap(hid_device *handle, unsigned char remap_key, unsigned char remap_code)
+static void hhkb_write_keymap(hid_device *handle, unsigned char *layout, char fn)
 {
 	unsigned char *buffer;
-	unsigned char *layout;
-	int res;
 	int i;
-
-	// Notify the device that the Keymap Tool is running
-	hhkb_notify_application_state(handle, 0);
-
-	// Grab current layout
-	layout = hhkb_get_layout(handle, 1);
-
-	// Remap key
-	layout[remap_key] = remap_code;
 
 	// First pass
 	buffer = (unsigned char *)malloc(USB_BUFFER_SIZE);
@@ -397,7 +386,7 @@ static void hhkb_remap(hid_device *handle, unsigned char remap_key, unsigned cha
 	buffer[6] = hhkb_get_keyboard_mode(handle);
 
 	// FN-layer
-	buffer[7] = 1;
+	buffer[7] = fn;
 
 	// First pass
 	for (i = 0; i < 57; i++)
@@ -478,6 +467,11 @@ static void hhkb_remap(hid_device *handle, unsigned char remap_key, unsigned cha
 	}
 
 	free(buffer);
+}
+
+static void hhkb_confirm_keymap(hid_device *handle)
+{
+	unsigned char *buffer;
 
 	// Confirm keymap
 	hhkb_write(handle, CONFIRM_KEYMAP);
@@ -492,6 +486,29 @@ static void hhkb_remap(hid_device *handle, unsigned char remap_key, unsigned cha
 	}
 
 	free(buffer);
+}
+
+static void hhkb_remap_key(hid_device *handle, unsigned char remap_key, unsigned char remap_code, char fn)
+{
+	unsigned char *buffer;
+	unsigned char *layout;
+	int res;
+	int i;
+
+	// Notify the device that the Keymap Tool is running
+	hhkb_notify_application_state(handle, 0);
+
+	// Grab current layout
+	layout = hhkb_get_layout(handle, fn);
+
+	// Remap key
+	layout[remap_key] = remap_code;
+
+	// Write layout
+	hhkb_write_keymap(handle, layout, fn);
+
+	// Confirm keymap
+	hhkb_confirm_keymap(handle);
 
 	// Reset dipswitch state
 	hhkb_reset_dipsw(handle);
@@ -502,8 +519,7 @@ static void hhkb_remap(hid_device *handle, unsigned char remap_key, unsigned cha
 	printf("Success\n");
 }
 
-// this is very ugly, but it does the job
-static void hhkb_dump_layout(hid_device *handle, int fn_layer)
+static void hhkb_print_layout_ansi(hid_device *handle, int fn_layer)
 {
 	unsigned char *layout;
 	int i;

@@ -46,7 +46,6 @@ int main(int argc, const char **argv)
 		OPT_BIT('k', "keymap", &action, "print current keymap", NULL, ACTION_KEYMAP),
 		OPT_BIT('f', "factory-reset", &action, "reset to factory defaults", NULL, ACTION_FACTORY_RESET),
 		OPT_GROUP("Keymapping options"),
-		// OPT_BIT(0, "remap", &action, "start key mapping", NULL, ACTION_REMAP, 0),
 		OPT_INTEGER(0, "remap-key", &key, "key number to remap", NULL, OPT_NONEG),
 		OPT_INTEGER(0, "scancode", &code, "hid scancode to map", NULL, OPT_NONEG),
 		OPT_BOOLEAN(0, "fn", &fn, "operate on function layer"),
@@ -103,17 +102,17 @@ int main(int argc, const char **argv)
 	}
 	// Print layout
 	else if (action & ACTION_KEYMAP) {
-		hhkb_dump_layout(handle, fn);
+		hhkb_print_layout_ansi(handle, fn);
 	}
 	// Factory reset device
 	else if (action & ACTION_FACTORY_RESET) {
 		// Confirm operation
-		printf("Are you sure you want to restore factory defaults?\nPlease type 'reset' to continue: ");
+		//printf("Are you sure you want to restore factory defaults?\nPlease type 'reset' to continue: ");
 		char str[10];
-		fgets(str, 10, stdin);
+		//fgets(str, 10, stdin);
 
 		// Check input text
-		if (!strcmp(str, "reset\n")) {
+		if (1 || !strcmp(str, "reset\n")) {
 			sleep(1);
 			hhkb_reset_to_factory_default(handle);
 		} else {
@@ -130,7 +129,7 @@ int main(int argc, const char **argv)
 		// Check input text
 		if (!strcmp(str, "confirm\n")) {
 			sleep(1);
-			hhkb_remap(handle, key, code);
+			hhkb_remap_key(handle, key, code, fn);
 		} else {
 			printf("Aborting..\n");
 		}
