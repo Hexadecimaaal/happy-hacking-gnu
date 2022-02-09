@@ -27,8 +27,7 @@ static hid_device *hhkb_get_programming_interface()
 	}
 
 	// Quit if interface is not found
-	if (!ret)
-	{
+	if (!ret) {
 		printf("error: no keyboard connected\n");
 		exit(EXIT_FAILURE);
 	}

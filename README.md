@@ -1,5 +1,5 @@
 # happy-hacking-gnu
-A free-as-in-freedom GNU/Linux alternative to the HHKB Keymap Tool provided by PFU.
+A free, open-source alternative to the HHKB Keymap Tool provided by PFU.
 
 | Features                    | Supported | Planned |
 |-----------------------------|:---------:|--------:|

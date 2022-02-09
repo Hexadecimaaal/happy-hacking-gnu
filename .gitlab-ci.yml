@@ -1,7 +1,4 @@
-# use the official gcc image, based on debian
-# see https://hub.docker.com/_/gcc/
-
-image: gcc
+image: fedora
 
 variables:
     GIT_SUBMODULE_STRATEGY: recursive
@@ -10,10 +7,17 @@ build:
   stage: build
 
   script:
-    - apt update && apt -y install cmake libudev-dev
+    - dnf install cmake gcc systemd-devel mingw64-gcc -y
     - cd bin
     - cmake ..
     - make
+    - cp hhg ../hhg-x86_64-linux
+    - rm -rf *
+    - mingw64-cmake ..
+    - make
+    - cp hhg.exe ../hhg-x86_64-win.exe
+    
   artifacts:
     paths:
-      - bin/hhg
+      - hhg-x86_64-linux
+      - hhg-x86_64-win.exe
