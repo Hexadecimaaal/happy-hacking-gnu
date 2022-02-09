@@ -139,6 +139,13 @@ int main(int argc, const char **argv)
 			hhkb_quit(handle);
 		}
 
+		// Hybrid models reserve FN+Q for pairing
+		// FN+Z and FN+X are technically reserved as well, but can be remapped fine excluding media keys
+		if (key == 44 && fn && hhkb_is_hybrid(handle)) {
+			printf("error: FN+Q is reserved for bluetooth pairing on hybrid models\n");
+			hhkb_quit(handle);
+		}
+
 		// Confirm operation
 		printf("Are you sure you want to assign 0x%02X to %i?\nPlease type 'confirm' to continue: ", code, key);
 		char str[10];
