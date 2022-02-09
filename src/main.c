@@ -1,6 +1,12 @@
 #include "functions.h"
 #include <argparse.h>
-#include <unistd.h>
+
+#ifdef _WIN32
+	#include <windows.h>
+#else
+	#include <unistd.h>
+	#define Sleep(x) usleep(x)
+#endif
 
 // Debug logging flag
 int verbose_log = 0;
@@ -119,7 +125,7 @@ int main(int argc, const char **argv)
 
 		// Check input text
 		if (!strcmp(str, "reset\n")) {
-			sleep(1);
+			Sleep(1000);
 			hhkb_reset_to_factory_default(handle);
 		} else {
 			printf("Aborting..\n");
@@ -140,7 +146,7 @@ int main(int argc, const char **argv)
 
 		// Check input text
 		if (!strcmp(str, "confirm\n")) {
-			sleep(1);
+			Sleep(1000);
 			hhkb_remap_key(handle, key, code, fn);
 		} else {
 			printf("Aborting..\n");
