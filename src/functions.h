@@ -182,8 +182,8 @@ static void hhkb_print_info(hid_device *handle)
 
 	// This value is zero if running on AppFirm, and one if
 	// the board is using BootFirm
-	int runningfirmware;
-	memcpy(&runningfirmware, buffer + 62, sizeof(int));
+	char runningfirmware;
+	memcpy(&runningfirmware, buffer + 62, 1);
 	printf("RunningFirmware: %d\n", runningfirmware);
 
 	// Free read buffer
