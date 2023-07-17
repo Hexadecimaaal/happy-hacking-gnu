@@ -17,6 +17,15 @@ enum {
 	GET_KEYMAP = 135
 };
 
+typedef enum {
+	UNSUPPORTED, // 500(10th anniversary ed.) || 600(BT-only) || vintage ones...
+	HHKB_PRO_2, // 400
+	HHKB_PRO_2_JP, // 420
+	HHKB_PRO_CLASSIC, // 401
+	HHKB_PRO_HYBRID, // 800
+	HHKB_PRO_HYBRID_JP // 820
+} hhkb_model_t;
+
 static void hhkb_notify_application_state(hid_device *handle, unsigned char open)
 {
 	unsigned char *buffer;
@@ -190,7 +199,63 @@ static void hhkb_print_info(hid_device *handle)
 	free(buffer);
 }
 
-static int hhkb_is_japanese_layout(hid_device *handle)
+// static int hhkb_is_japanese_layout(hid_device *handle)
+// {
+// 	unsigned char *buffer;
+// 	char model[64];
+
+// 	// Write to HID device and save response to buffer
+// 	hhkb_write(handle, GET_KEYBOARD_INFO);
+// 	buffer = hhkb_read(handle);
+
+// 	if (verbose_log) {
+// 		// Debug log
+// 		printf("debug: GET_KEYBOARD_INFO ");
+// 		for (int i = 0; i < 6; i++) {
+// 			printf("0x%02X ", buffer[i]);
+// 		}
+// 		printf("\n");
+// 	}
+
+// 	// Get model string from buffer
+// 	memcpy(model, buffer + 6, 20);
+
+// 	// Free read buffer
+// 	free(buffer);
+
+// 	// All japanese models are PD-KBx20xx
+// 	return !!strstr(model, "20");
+// }
+
+// static int hhkb_is_hybrid(hid_device *handle)
+// {
+// 	unsigned char *buffer;
+// 	char model[64];
+
+// 	// Write to HID device and save response to buffer
+// 	hhkb_write(handle, GET_KEYBOARD_INFO);
+// 	buffer = hhkb_read(handle);
+
+// 	if (verbose_log) {
+// 		// Debug log
+// 		printf("debug: GET_KEYBOARD_INFO ");
+// 		for (int i = 0; i < 6; i++) {
+// 			printf("0x%02X ", buffer[i]);
+// 		}
+// 		printf("\n");
+// 	}
+
+// 	// Get model string from buffer
+// 	memcpy(model, buffer + 6, 20);
+
+// 	// Free read buffer
+// 	free(buffer);
+
+// 	// Hybrid models (non-Japanese) are PD-KB800x, PD-KB800xx, or PD-KB800xxx depending on exact model
+// 	return !!strstr(model, "800");
+// }
+
+static hhkb_model_t hhkb_model(hid_device *handle)
 {
 	unsigned char *buffer;
 	char model[64];
@@ -214,36 +279,19 @@ static int hhkb_is_japanese_layout(hid_device *handle)
 	// Free read buffer
 	free(buffer);
 
-	// All japanese models are PD-KBx20xx
-	return !!strstr(model, "20");
-}
-
-static int hhkb_is_hybrid(hid_device *handle)
-{
-	unsigned char *buffer;
-	char model[64];
-
-	// Write to HID device and save response to buffer
-	hhkb_write(handle, GET_KEYBOARD_INFO);
-	buffer = hhkb_read(handle);
-
-	if (verbose_log) {
-		// Debug log
-		printf("debug: GET_KEYBOARD_INFO ");
-		for (int i = 0; i < 6; i++) {
-			printf("0x%02X ", buffer[i]);
-		}
-		printf("\n");
+	if (!!strstr(model, "400")) {
+		return HHKB_PRO_2;
+	} else if (!!strstr(model, "420")) {
+		return HHKB_PRO_2_JP;
+	} else if (!!strstr(model, "401")) {
+		return HHKB_PRO_CLASSIC;
+	} else if (!!strstr(model, "800")) {
+		return HHKB_PRO_HYBRID;
+	} else if (!!strstr(model, "820")) {
+		return HHKB_PRO_HYBRID_JP;
 	}
 
-	// Get model string from buffer
-	memcpy(model, buffer + 6, 20);
-
-	// Free read buffer
-	free(buffer);
-
-	// Hybrid models (non-Japanese) are PD-KB800x, PD-KB800xx, or PD-KB800xxx depending on exact model
-	return !!strstr(model, "800");
+	return UNSUPPORTED;
 }
 
 static unsigned char *hhkb_get_layout(hid_device *handle, unsigned char with_fn)
@@ -296,6 +344,10 @@ static unsigned char *hhkb_get_layout(hid_device *handle, unsigned char with_fn)
 			printf("0x%02X ", buffer[i]);
 		}
 		printf("\n");
+		for (int i = 0; i < 58; i++) {
+			printf("0x%02X ", buffer[6 + i]);
+		}
+		printf("\n");
 	}
 
 	// Free read buffer
@@ -313,6 +365,10 @@ static unsigned char *hhkb_get_layout(hid_device *handle, unsigned char with_fn)
 			printf("0x%02X ", buffer[i]);
 		}
 		printf("\n");
+		for (int i = 0; i < 58; i++) {
+			printf("0x%02X ", buffer[6 + i]);
+		}
+		printf("\n");
 	}
 
 	// Free read buffer
@@ -328,6 +384,10 @@ static unsigned char *hhkb_get_layout(hid_device *handle, unsigned char with_fn)
 		printf("debug: GET_KEYMAP(3) ");
 		for (int i = 0; i < 6; i++) {
 			printf("0x%02X ", buffer[i]);
+		}
+		printf("\n");
+		for (int i = 0; i < 12; i++) {
+			printf("0x%02X ", buffer[6 + i]);
 		}
 		printf("\n");
 	}
@@ -583,22 +643,33 @@ static void hhkb_print_layout_ansi(hid_device *handle, int fn_layer)
 	// Get layout array
 	layout = hhkb_get_layout(handle, fn_layer);
 
+	const int first_key = 60 + 9;
+	const int first_row_keys = 15;
+	const int second_row_first = first_key - first_row_keys;
+	const int second_row_keys = 14;
+	const int third_row_first = second_row_first - second_row_keys;
+	const int third_row_keys = 13;
+	const int fourth_row_first = third_row_first - third_row_keys;
+	const int fourth_row_keys = 13 + 1;
+	const int last_row_first = fourth_row_first - fourth_row_keys;
+	const int last_row_keys = 5 + 8;
+	const int terminate = last_row_first - last_row_keys;
 	// Print first row
 	printf("----------------------------------------------------------------------------\n|");
-	for (i = 60; i > 45; i--) {
+	for (i = first_key; i > second_row_first; i--) {
 		printf(" %02d |", i);
 	}
 	printf("\n|");
-	for (i = 60; i > 45; i--) {
+	for (i = first_key; i > second_row_first; i--) {
 		printf(" %02x |", layout[i]);
 	}
 	printf("\n----------------------------------------------------------------------------\n|");
 
 	// Print second row
-	for (i = 45; i > 31; i--) {
-		if (i == 45) {
+	for (i = second_row_first; i > third_row_first; i--) {
+		if (i == second_row_first) {
 			printf("  %02d  |", i);
-		} else if (i == 32) {
+		} else if (i == third_row_first + 1) { // = second row last
 			printf("  %02d   |", i);
 		} else {
 			printf(" %02d |", i);
@@ -606,10 +677,10 @@ static void hhkb_print_layout_ansi(hid_device *handle, int fn_layer)
 	}
 	printf("\n|");
 
-	for (i = 45; i > 31; i--) {
-		if (i == 45) {
+	for (i = second_row_first; i > third_row_first; i--) {
+		if (i == second_row_first) {
 			printf("  %02x  |", layout[i]);
-		} else if (i == 32) {
+		} else if (i == third_row_first + 1) {
 			printf("  %02x   |", layout[i]);
 		} else {
 
@@ -617,25 +688,25 @@ static void hhkb_print_layout_ansi(hid_device *handle, int fn_layer)
 		}
 	}
 
-	printf("\n----------------------------------------------------------------------------\n|");
+	printf("\n-------------------------------------------------------------------------- -\n|");
 
 	// Print third row
-	for (i = 31; i > 18; i--) {
-		if (i == 31) {
+	for (i = third_row_first; i > fourth_row_first; i--) {
+		if (i == third_row_first) {
 			printf("  %02d   |", i);
-		} else if (i == 19) {
-			printf("    %02d     |", i);
+		} else if (i == fourth_row_first + 1) {
+			printf("    %02d   | |", i);
 		} else {
 			printf(" %02d |", i);
 		}
 	}
 	printf("\n|");
 
-	for (i = 31; i > 18; i--) {
-		if (i == 31) {
+	for (i = third_row_first; i > fourth_row_first; i--) {
+		if (i == third_row_first) {
 			printf("  %02x   |", layout[i]);
-		} else if (i == 19) {
-			printf("    %02x     |", layout[i]);
+		} else if (i == fourth_row_first + 1) {
+			printf("    %02x   | |", layout[i]);
 		} else {
 
 			printf(" %02x |", layout[i]);
@@ -644,51 +715,54 @@ static void hhkb_print_layout_ansi(hid_device *handle, int fn_layer)
 	printf("\n----------------------------------------------------------------------------\n|");
 
 	// Print fourth row
-	for (i = 18; i > 5; i--) {
-		if (i == 18) {
+	for (i = fourth_row_first; i > last_row_first; i--) {
+		if (i == fourth_row_first) {
 			printf("   %02d     |", i);
-		} else if (i == 7) {
-			printf("   %02d   |", i);
+		// } else if (i == last_row_first + 2) { // the right shift
+		// 	printf("   %02d   |", i);
 		} else {
 			printf(" %02d |", i);
 		}
 	}
 	printf("\n|");
 
-	for (i = 18; i > 5; i--) {
-		if (i == 18) {
+	for (i = fourth_row_first; i > last_row_first; i--) {
+		if (i == fourth_row_first) {
 			printf("   %02x     |", layout[i]);
-		} else if (i == 7) {
-			printf("   %02x   |", layout[i]);
+		// } else if (i == last_row_first + 2) {
+		// 	printf("   %02x   |", layout[i]);
 		} else {
 
 			printf(" %02x |", layout[i]);
 		}
 	}
 
-	printf("\n----------------------------------------------------------------------------\n        |");
+	printf("\n----------------------------------------------------------------------------");
+	// printf("\n        |");
+	printf("\n|");
 
 	// Print bottom row
-	for (i = 5; i > 0; i--) {
-		if (i == 4 || i == 2) {
-			printf("  %02d   |", i);
-		} else if (i == 3) {
-			printf("               %02d               |", i);
-		} else {
+	for (i = last_row_first; i > terminate; i--) {
+		// if (i == 4 || i == 2) {
+		// 	printf("  %02d   |", i);
+		// } else if (i == 3) {
+		// 	printf("               %02d               |", i);
+		// } else {
 			printf(" %02d |", i);
-		}
+		// }
 	}
-	printf("\n        |");
+	// printf("\n        |");
+	printf("\n|");
 
-	for (i = 5; i > 0; i--) {
-		if (i == 4 || i == 2) {
-			printf("  %02x   |", layout[i]);
-		} else if (i == 3) {
-			printf("               %02x               |", layout[i]);
-		} else {
+	for (i = last_row_first; i > terminate; i--) {
+		// if (i == 4 || i == 2) {
+		// 	printf("  %02x   |", layout[i]);
+		// } else if (i == 3) {
+		// 	printf("               %02x               |", layout[i]);
+		// } else {
 
 			printf(" %02x |", layout[i]);
-		}
+		// }
 	}
 	printf("\n        ------------------------------------------------------------");
 

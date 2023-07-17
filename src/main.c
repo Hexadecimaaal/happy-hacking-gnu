@@ -109,10 +109,10 @@ int main(int argc, const char **argv)
 	// Print layout
 	else if (action & ACTION_KEYMAP) {
 		// Abort if using Japanese HHKB
-		if (hhkb_is_japanese_layout(handle)) {
-			printf("error: this model isn't supported yet\n");
-			hhkb_quit(handle);
-		}
+		// if (hhkb_is_japanese_layout(handle)) {
+		// 	printf("error: this model isn't supported yet\n");
+		// 	hhkb_quit(handle);
+		// }
 
 		hhkb_print_layout_ansi(handle, fn);
 	}
@@ -134,10 +134,10 @@ int main(int argc, const char **argv)
 	// Remap key
 	else if (action & ACTION_REMAP) {
 		// Abort if using Japanese HHKB
-		if (hhkb_is_japanese_layout(handle)) {
-			printf("error: this model isn't supported yet\n");
-			hhkb_quit(handle);
-		}
+		// if (hhkb_is_japanese_layout(handle)) {
+		// 	printf("error: this model isn't supported yet\n");
+		// 	hhkb_quit(handle);
+		// }
 
 		// Hybrid models reserve FN+Q for pairing
 		// FN+Z and FN+X are technically reserved as well, but can be remapped fine excluding media keys
